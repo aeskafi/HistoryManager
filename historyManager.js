@@ -43,7 +43,26 @@ function backupHistoryFile(filePath) {
   const backupFilePath = `${filePath}.${timestamp}.bak`;
 
   fs.copyFileSync(filePath, backupFilePath);
+  console.log(`Original history file: ${filePath}`);
   console.log(`Backup created: ${backupFilePath}`);
+}
+
+function deduplicateHistory(data) {
+  const lines = data.split("\n");
+  const uniqueCommands = new Set();
+  const deduplicatedLines = [];
+
+  for (const line of lines) {
+    // Extracting command from the line (assuming format: ': <timestamp>:<command>')
+    // This works for zsh; adjust the split logic for other shells if necessary
+    const command = line.split(":").slice(-1)[0].trim();
+    if (command && !uniqueCommands.has(command)) {
+      uniqueCommands.add(command);
+      deduplicatedLines.push(line);
+    }
+  }
+
+  return deduplicatedLines.join("\n");
 }
 
 /**
@@ -58,13 +77,8 @@ function manageHistory(historyFilePath) {
       return;
     }
 
-    // Split the file content into lines and remove duplicates
-    let uniqueCommands = Array.from(new Set(data.split("\n")));
+    const output = deduplicateHistory(data);
 
-    // Join the commands back into a single string
-    let output = uniqueCommands.join("\n");
-
-    // Write the output back to the file
     fs.writeFile(historyFilePath, output, "utf8", (err) => {
       if (err) {
         console.error("Error writing to history file:", err);
