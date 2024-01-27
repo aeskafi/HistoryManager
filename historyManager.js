@@ -1,5 +1,6 @@
 /**
- * @fileoverview A script to manage shell history files by removing duplicates.
+ * @fileoverview A script to manage shell history files by removing duplicates,
+ * with automatic backup based on the date-time of execution.
  */
 
 const fs = require("fs");
@@ -33,6 +34,19 @@ function getHistoryFilePath() {
 }
 
 /**
+ * Creates a backup of the history file.
+ *
+ * @param {string} filePath - The file path of the history file to be backed up.
+ */
+function backupHistoryFile(filePath) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const backupFilePath = `${filePath}.${timestamp}.bak`;
+
+  fs.copyFileSync(filePath, backupFilePath);
+  console.log(`Backup created: ${backupFilePath}`);
+}
+
+/**
  * Reads the shell history file, removes duplicate entries, and writes the unique entries back.
  *
  * @param {string} historyFilePath - The file path of the shell history.
@@ -63,6 +77,7 @@ function manageHistory(historyFilePath) {
 
 try {
   const historyFilePath = getHistoryFilePath();
+  backupHistoryFile(historyFilePath);
   manageHistory(historyFilePath);
 } catch (error) {
   console.error(error.message);
